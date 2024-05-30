@@ -52,14 +52,6 @@ async function commentOnMergablePRs() {
   core.info(`Code-owners: \n - ${codeowners.users.join("\n - ")}`)
   core.info(`Labels: \n - ${codeowners.labels.join("\n - ")}`)
 
-  if (!codeowners.users.length) {
-    console.log("This PR does not have any code-owners")
-    process.exit(0)
-  }
-
-  
-
-
   // Determine who has access to merge every file in this PR
   const ownersWhoHaveAccessToAllFilesInPR = []
   codeowners.users.forEach(owner => {
@@ -86,6 +78,11 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
+  if (!codeowners.users.length) {
+    console.log("This PR does not have any code-owners")
+    process.exit(0)
+  }
+
   const ourSignature = "<!-- Message About Merging -->"
   const comments = await octokit.issues.listComments({ ...thisRepo, issue_number: pr.number })
   const existingComment = comments.data.find(c => c.body.includes(ourSignature))
@@ -94,7 +91,11 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
-  const owners = new Intl.ListFormat().format(ownersWhoHaveAccessToAllFilesInPR);
+  const ownerNoPings = JSON.parse(core.getInput('ownerNoPings'))
+  const formattedOwnersWhoHaveAccessToAllFilesInPR = ownersWhoHaveAccessToAllFilesInPR.map((owner) => {
+    return ownerNoPings.includes(owner) ? `\`${owner}\`` : owner
+  })
+  const owners = new Intl.ListFormat().format(formattedOwnersWhoHaveAccessToAllFilesInPR);
   const message = `Thanks for the PR!
 
 This section of the codebase is owned by ${owners} - if they write a comment saying "LGTM" then it will be merged.
