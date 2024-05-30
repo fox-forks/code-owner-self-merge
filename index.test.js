@@ -1,4 +1,4 @@
-const { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles, githubLoginIsInCodeowners } = require(".");
+const { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles, githubLoginIsInCodeowners, hasValidLgtmString } = require(".");
 
 test("determine who owns a set of files", () => {
   const noFiles = findCodeOwnersForChangedFiles(["root-codeowners/one.two.js"], "./test-code-owners-repo");
@@ -53,3 +53,29 @@ describe(githubLoginIsInCodeowners, () => {
     expect(noOrt).toEqual(false);
   });
 })  
+
+describe(hasValidLgtmString, () => {
+  test("allows lgtm", () => {
+    const hasValidString = hasValidLgtmString("This lgtm!");
+    expect(hasValidString).toEqual(true);
+  });
+
+  test("denies lgtm but", () => {
+    const hasValidString = hasValidLgtmString("This lgtm but");
+    expect(hasValidString).toEqual(false);
+
+    const hasValidString2 = hasValidLgtmString("This lgtm, but");
+    expect(hasValidString2).toEqual(false);
+  });
+
+  test("denies lgtm in quotes or code blocks", () => {
+    const hasValidString = hasValidLgtmString("write \"lgtm\"");
+    expect(hasValidString).toEqual(false);
+
+    const hasValidString2 = hasValidLgtmString("write 'lgtm");
+    expect(hasValidString2).toEqual(false);
+
+    const hasValidString3 = hasValidLgtmString("write lgtm`");
+    expect(hasValidString3).toEqual(false);
+  })
+})
